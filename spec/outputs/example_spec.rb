@@ -1,5 +1,5 @@
 require "logstash/devutils/rspec/spec_helper"
-require "logstash/outputs/example"
+require "logstash/outputs/nsq"
 require "logstash/codecs/plain"
 require "logstash/event"
 
