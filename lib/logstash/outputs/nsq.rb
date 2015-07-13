@@ -12,15 +12,19 @@ class LogStash::Outputs::Nsq < LogStash::Outputs::Base
 
   public
   def register
-    LogStash::Logger.setup_log4j(@logger)
     options = {
-        :nsqd => @nsqd,
         :nsqlookupd => @nsqlookupd,
         :topic => @topic,
     }
+    if nsqlookupd == []
+      options = {
+          :nsqd => @nsqd,
+          :topic => @topic,
+      }
+    end # if
     @producer = Nsq::Producer.new(options)
     #@producer.connect
-    @logger.info('Registering nsq producer', :topic => @topic)
+    @logger.info('Registering nsq producer', :nsqd => @nsqd, :nsqlookupd => @nsqlookupd, :topic => @topic)
 
     @codec.on_event do |event, data|
       begin
