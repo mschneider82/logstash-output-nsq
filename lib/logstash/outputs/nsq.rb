@@ -27,8 +27,10 @@ class LogStash::Outputs::Nsq < LogStash::Outputs::Base
           :nsqlookupd => @nsqlookupd,
           :topic => @topic,
           :tls_v1 => @tls_v1,
-          :tls_key => @tls_key,
-          :tls_cert => @tls_cert
+          :tls_context => {
+           key: @tls_key,
+           certificate: @tls_cert
+          }
       }
     end
     # overwrite options if no nsqlookupd is used:
@@ -38,8 +40,10 @@ class LogStash::Outputs::Nsq < LogStash::Outputs::Base
             :nsqd => @nsqd,
             :topic => @topic,
             :tls_v1 => @tls_v1,
-            :tls_key => @tls_key,
-            :tls_cert => @tls_cert
+            :tls_context => {
+             key: @tls_key,
+             certificate: @tls_cert
+            }
         }
       else
         options = {
