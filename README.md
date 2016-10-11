@@ -30,6 +30,31 @@ Using NSQLOOKUPD to find nsqd servers for the given topic:
        }
     }
 
+Using a static NSQD with TLS:
+====================
+
+    output {
+       nsq {
+            nsqd => 127.0.0.1:4150"
+            topic => "testtopic"
+            tls_v1 => true
+       }
+    }
+
+Using a static NSQD with TLS Auth:
+====================
+
+    output {
+       nsq {
+            nsqd => 127.0.0.1:4150"
+            topic => "testtopic"
+            tls_v1 => true
+            tls_key => "/path/to/private.key"
+            tls_cert => "/path/to/public.pem"
+       }
+    }
+
+
 Dependencies
 ====================
 

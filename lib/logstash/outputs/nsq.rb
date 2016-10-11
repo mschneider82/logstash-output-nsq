@@ -9,18 +9,45 @@ class LogStash::Outputs::Nsq < LogStash::Outputs::Base
   config :nsqd, :validate => :string, :default => nil
   config :nsqlookupd, :validate => :array, :default => nil
   config :topic, :validate => :string, :required => true
+  config :tls_v1, :validate => :boolean, :default => false
+  config :tls_key, :validate => :string
+  config :tls_cert, :validate => :string
 
   public
   def register
     options = {
         :nsqlookupd => @nsqlookupd,
         :topic => @topic,
+        :tls_v1 => @tls_v1
     }
-    if nsqlookupd == []
+    # overwrite nsqlookupd options if client certificate validation is used:
+    # this is very dirty. please fix 
+    if @tls_key and @tls_cert
       options = {
-          :nsqd => @nsqd,
+          :nsqlookupd => @nsqlookupd,
           :topic => @topic,
+          :tls_v1 => @tls_v1,
+          :tls_key => @tls_key,
+          :tls_cert => @tls_cert
       }
+    end
+    # overwrite options if no nsqlookupd is used:
+    if nsqlookupd == []
+      if @tls_key and @tls_cert
+        options = {
+            :nsqd => @nsqd,
+            :topic => @topic,
+            :tls_v1 => @tls_v1,
+            :tls_key => @tls_key,
+            :tls_cert => @tls_cert
+        }
+      else
+        options = {
+            :nsqd => @nsqd,
+            :topic => @topic,
+            :tls_v1 => @tls_v1
+        }
+      end
     end # if
     @producer = Nsq::Producer.new(options)
     #@producer.connect
