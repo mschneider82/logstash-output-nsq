@@ -13,7 +13,7 @@ Using a static NSQD:
 
     output {
        nsq {
-            nsqd => 127.0.0.1:4150"
+            nsqd => "127.0.0.1:4150"
             topic => "testtopic"
        }
     }
@@ -35,7 +35,7 @@ Using a static NSQD with TLS:
 
     output {
        nsq {
-            nsqd => 127.0.0.1:4150"
+            nsqd => "127.0.0.1:4150"
             topic => "testtopic"
             tls_v1 => true
        }
@@ -46,7 +46,7 @@ Using a static NSQD with TLS Auth:
 
     output {
        nsq {
-            nsqd => 127.0.0.1:4150"
+            nsqd => "127.0.0.1:4150"
             topic => "testtopic"
             tls_v1 => true
             tls_key => "/path/to/private.key"
