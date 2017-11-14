@@ -78,7 +78,8 @@ class LogStash::Outputs::Nsq < LogStash::Outputs::Base
     @codec.encode(event)
   end # def receive
 
-  def teardown
+  def close
+    @logger.info('closing nsq producer')
     @producer.terminate
   end
 end #class LogStash::Outputs::Nsq
