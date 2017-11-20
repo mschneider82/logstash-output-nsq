@@ -1,19 +1,25 @@
 require 'logstash/namespace'
 require 'logstash/outputs/base'
+require 'java'
 
 class LogStash::Outputs::Nsq < LogStash::Outputs::Base
-  config_name 'nsq'
+    declare_threadsafe!
+    config_name 'nsq'
 
-  default :codec, 'json'
-  config :nsqd, :validate => :string, :default => nil
-  config :nsqlookupd, :validate => :array, :default => nil
-  config :topic, :validate => :string, :required => true
-  config :tls_v1, :validate => :boolean, :default => false
-  config :tls_key, :validate => :string
-  config :tls_cert, :validate => :string
+    default :codec, 'json'
 
+    default :codec, 'json'
+    config :nsqd, :validate => :string, :default => nil
+    config :nsqlookupd, :validate => :array, :default => nil
+    config :topic, :validate => :string, :required => true
+    config :tls_v1, :validate => :boolean, :default => false
+    config :tls_key, :validate => :string
+    config :tls_cert, :validate => :string
+ 
   public
   def register
+    @thread_batch_map = Concurrent::Hash.new
+
     require 'nsq'
     options = {
         :nsqlookupd => @nsqlookupd,
@@ -53,11 +59,11 @@ class LogStash::Outputs::Nsq < LogStash::Outputs::Base
         }
       end
     end # if
+
     @producer = Nsq::Producer.new(options)
-    #@producer.connect
     @logger.info('Registering nsq producer', :nsqd => @nsqd, :nsqlookupd => @nsqlookupd, :topic => @topic)
     @codec.on_event do |event, data|
-       write_to_nsq(event, data)
+        write_to_nsq(event, data)
     end
   end # def register
 
@@ -71,17 +77,35 @@ class LogStash::Outputs::Nsq < LogStash::Outputs::Base
     end # begin
   end # def send_to_nsq
 
-  def receive(event)
-    return unless output?(event)
-    if event == LogStash::SHUTDOWN
-      finished
-      return
+  def prepare(record)
+    # This output is threadsafe, so we need to keep a batch per thread.
+    @thread_batch_map[Thread.current].add(record)
+  end
+
+  def multi_receive(events)
+    t = Thread.current
+    if !@thread_batch_map.include?(t)
+      @thread_batch_map[t] = java.util.ArrayList.new(events.size)
     end
-    @codec.encode(event)
-  end # def receive
+
+    events.each do |event|
+      break if event == LogStash::SHUTDOWN
+      @codec.encode(event)
+    end
+
+    batch = @thread_batch_map[t]
+    if batch.any?
+      retrying_send(batch)
+      batch.clear
+    end
+  end
 
   def close
     @logger.info('closing nsq producer')
     @producer.terminate
   end
+
+  private
+
 end #class LogStash::Outputs::Nsq
+
