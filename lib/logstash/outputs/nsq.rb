@@ -1,6 +1,5 @@
 require 'logstash/namespace'
 require 'logstash/outputs/base'
-require 'nsq'
 
 class LogStash::Outputs::Nsq < LogStash::Outputs::Base
   config_name 'nsq'
@@ -15,6 +14,7 @@ class LogStash::Outputs::Nsq < LogStash::Outputs::Base
 
   public
   def register
+    require 'nsq'
     options = {
         :nsqlookupd => @nsqlookupd,
         :topic => @topic,
@@ -56,18 +56,20 @@ class LogStash::Outputs::Nsq < LogStash::Outputs::Base
     @producer = Nsq::Producer.new(options)
     #@producer.connect
     @logger.info('Registering nsq producer', :nsqd => @nsqd, :nsqlookupd => @nsqlookupd, :topic => @topic)
-
     @codec.on_event do |event, data|
-      begin
-        @producer.write(event.sprintf(data))
-      rescue LogStash::ShutdownSignal
-        @logger.info('nsq producer got shutdown signal')
-      rescue => e
-        @logger.warn('nsq producer threw exception, restarting',
-                     :exception => e)
-      end # begin
-    end #do
+       write_to_nsq(event, data)
+    end
   end # def register
+
+  def write_to_nsq(event, data)
+    begin
+      @producer.write(event.sprintf(data))
+    rescue LogStash::ShutdownSignal
+      @logger.info('nsq producer got shutdown signal')
+    rescue => e
+      @logger.warn('nsq producer threw exception, restarting', :exception => e)
+    end # begin
+  end # def send_to_nsq
 
   def receive(event)
     return unless output?(event)
