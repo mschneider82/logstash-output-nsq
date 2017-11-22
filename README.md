@@ -15,6 +15,7 @@ Using a static NSQD:
        nsq {
             nsqd => "127.0.0.1:4150"
             topic => "testtopic"
+            codec => plain
        }
     }
 
@@ -27,6 +28,7 @@ Using NSQLOOKUPD to find nsqd servers for the given topic:
        nsq {
             nsqlookupd => ["127.0.0.1:4161","1.2.3.4:4161"]
             topic => "testtopic"
+            codec => json
        }
     }
 
@@ -59,6 +61,11 @@ Dependencies
 ====================
 
 * nsq-ruby
+
+Notes
+====================
+
+Codec json is default, if you want no @timestamp added just use codec plain
 
 # Logstash Plugin
 
