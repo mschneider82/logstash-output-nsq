@@ -61,7 +61,7 @@ class LogStash::Outputs::Nsq < LogStash::Outputs::Base
 
   def write_to_nsq(payload)
     @producer.write(payload)
-  end # def send_to_nsq
+  end # def write_to_nsq
 
   def multi_receive_encoded(encoded)
     encoded.each do |event,data|
